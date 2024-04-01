@@ -47,7 +47,7 @@ public class Resolver implements Runnable {
 	}
 	
 	//Read instructions from the headers
-	public void readInst() {
+	void readInst() {
 		if(currentLine.startsWith("@")) {
 			Character c = InstructionHandler.handleCharacter(currentLine.substring(1));
 			sc.characters.add(c);
@@ -56,26 +56,39 @@ public class Resolver implements Runnable {
 		}
 	}
 	
-	//Read actual lines, sublines and annotations
-	public void readLine() {
-		//Skip blank lines
-		if(currentLine.isBlank()) return;
-		
-		//Apply Annotations
+	//Flags for SublineFormat
+	int prevcount;
+	int aftercount;
+	void initFlags() {
+		String[] split = sc.props.sublineformat.split(",");
+		prevcount = Integer.valueOf(split[0]);
+		aftercount = Integer.valueOf(split[1]);
+		p = true;
+	}
+	
+	//Process annotations
+	boolean readAnno() {
 		if(currentLine.startsWith("@") || currentLine.startsWith(">@")) {
 			heldAnnos.add(new Annotation(TextUtils.getAnnoContent(currentLine), TextUtils.identifyAnnoType(currentLine)));
+			return true;
 		} else if(currentLine.startsWith("<@")) {
 			AnnotationType t = TextUtils.identifyAnnoType(currentLine);
 			Annotation a = new Annotation(TextUtils.getAnnoContent(currentLine), t);
 			a.parent = sc.lines.getLast();
 			sc.lines.getLast().addAnnotationAfter(a);
 			System.out.println("^===" + t.toString() + ": " + TextUtils.getAnnoContent(currentLine));
-			
-		//Attach Sublines
-		} else if(currentLine.startsWith(">:")) {
+			return true;
+		}
+		return false;
+	}
+	
+	//Process sublines
+	boolean readSubline() {
+		if(currentLine.startsWith(">:")) {
 			currentLine = TextUtils.rmColon(currentLine);
 			identifyChara(currentLine);
 			heldSublines.add(new Subline(currentLine));
+			return true;
 		} else if(currentLine.startsWith(":") || currentLine.startsWith("<:")) {
 			currentLine = TextUtils.rmColon(currentLine);
 			identifyChara(currentLine);
@@ -83,32 +96,98 @@ public class Resolver implements Runnable {
 			s.parent = sc.lines.getLast();
 			sc.lines.getLast().addSublineAfter(s);
 			System.out.println("\t" + currentLine);
-			
-		//Finally it could be an actual line
-		} else {
-			//Attempt to update the current Character
-			identifyChara(currentLine);
-			currentLine = TextUtils.rmSpaces(currentLine);
-			if(currentLine.isBlank()) return;
-			
-			Line l = new Line(currentLine, currentCharacter);
-			
-			//Apply the cached Sublines and Annotations
-			for(Annotation a : heldAnnos) {
-				a.parent = l;
-				l.addAnnotationBefore(a);
-				System.out.println("V===" + a.type.toString() + ": " + a.content);
-			}
-			for(Subline s : heldSublines) {
-				s.characters = l.characters;
-				l.addSublineBefore(s);
-				System.out.println("V\t" + currentLine);
-			}
-			heldAnnos.clear();
-			heldSublines.clear();
-			sc.lines.add(l);
-			System.out.println(TextUtils.getCharaName(currentCharacter) + ": " + currentLine);
+			return true;
 		}
+		return false;
+	}
+	
+	//Flags, pc counts prev sublines, ac counts after sublines, p indicates in prev state or after state
+	int pc = 0;
+	int ac = 0;
+	boolean p = true;
+	boolean formattedReadSubline() {
+		if(p) {
+			if(pc < prevcount) {
+				currentLine = TextUtils.rmColon(currentLine);
+				identifyChara(currentLine);
+				heldSublines.add(new Subline(currentLine));
+				if(++pc >= prevcount) {
+					pc = 0;
+					p = !p;
+				}
+				return true;
+			} else {
+				pc = 0;
+				p = !p;
+				return false;
+			}
+		} else {
+			if(ac < aftercount) {
+					currentLine = TextUtils.rmColon(currentLine);
+					identifyChara(currentLine);
+					Subline s = new Subline(currentLine);
+					s.parent = sc.lines.getLast();
+					sc.lines.getLast().addSublineAfter(s);
+					//System.out.println("!pc, ac :" + pc + " " + ac);
+					//System.out.println("!p :" + p);
+				System.out.println("\t" + currentLine);
+				if(++ac >= prevcount) {
+					ac = 0;
+					p = !p;
+				}
+				return true;
+			} else {
+				ac = 0;
+				p = !p;
+				return false;
+			}
+		}
+	}
+	//Finally it could be an actual line
+	public void readMainLine() {
+		Line l = new Line(currentLine, currentCharacter);
+		//Apply the cached Sublines and Annotations
+		for(Annotation a : heldAnnos) {
+			a.parent = l;
+			l.addAnnotationBefore(a);
+			System.out.println("V===" + a.type.toString() + ": " + a.content);
+		}
+		for(Subline s : heldSublines) {
+			s.characters = l.characters;
+			l.addSublineBefore(s);
+			System.out.println("V\t" + currentLine);
+		}
+		heldAnnos.clear();
+		heldSublines.clear();
+		sc.lines.add(l);
+		System.out.println(TextUtils.getCharaName(currentCharacter) + ": " + currentLine);
+	}
+	
+	//Read actual lines, sublines and annotations
+	public void readLine() {
+		//Skip blank lines
+		if(currentLine.isBlank()) return;
+		
+		//Attempt to update the current Character
+		identifyChara(currentLine);
+		currentLine = TextUtils.rmSpaces(currentLine);
+		if(currentLine.isBlank()) return;
+		
+		//Manually set main line detection
+		if(currentLine.startsWith("::")) {
+			currentLine = TextUtils.untilLetter(currentLine);
+			readMainLine();
+			return;
+		}
+		
+		//Annotation and Subline detection
+		if(readAnno()) return;
+		if(readSubline()) return;
+		
+		//Apply SublineFormat
+		if(sc.props.sublineformat != null && formattedReadSubline()) return;
+		
+		readMainLine();
 	}
 	
 	//Attempt to match the known names of Characters to look for Character lines.
@@ -168,10 +247,7 @@ public class Resolver implements Runnable {
 				}
 			}
 			last = d;
-			if(chs.size() < expect) {
-				System.out.println("Done");
-				break;
-			}
+			if(chs.size() < expect) break;
 			expect++;
 		}
 		if(chs.isEmpty()) return;
@@ -179,6 +255,7 @@ public class Resolver implements Runnable {
 		currentCharacter = chs;	
 		String[] tmp = currentLine.split(last);
 		currentLine = tmp.length == 1 ? "" : tmp[1];
+		currentLine = TextUtils.untilLetter(currentLine);
 	}
 	
 	//The thread main method.
@@ -197,6 +274,7 @@ public class Resolver implements Runnable {
 				}
 				readInst();
 			}
+			initFlags();
 			System.out.println("\r|==========READ==LINES==BEGIN==========|");
 			currentCharacter.add(Character.Everyone);
 			while((currentLine = br.readLine()) != null) {

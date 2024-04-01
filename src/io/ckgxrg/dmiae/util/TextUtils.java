@@ -13,12 +13,16 @@ public class TextUtils {
 	public static String rmSpaces(String s) {
 		String ss = "";
 		for(int i = 0; i < s.length(); i++) {
-			if(s.charAt(i) != ' ')
+			if(s.charAt(i) != ' ') {
 				ss = s.substring(i);
-				for(int j = ss.length() - 1; j >= 0 ; j--) {
-					if(s.charAt(j) != ' ')
-						return s.substring(0, j + 1);
-				}
+				break;
+			}
+		}
+		for(int j = ss.length() - 1; j >= 0; j--) {
+//			/System.out.println(ss.charAt(j));
+			if(ss.charAt(j) != ' ') {
+				return ss.substring(0, j + 1);
+			}
 		}
 		return "";
 	}
@@ -28,10 +32,15 @@ public class TextUtils {
 		if(sss.length <= 1)
 			return "";
 		String ss = sss[1];
-		ss = rmSpaces(ss);
-		for(int i = 0; i < ss.length(); i++) {
-			if(Pattern.matches("^[\\u4E00-\\u9FA5A-Za-z0-9]+$", ""+ss.charAt(i))) {
-				return ss.substring(i);
+		return untilLetter(ss);
+	}
+	
+	//Remove everything until a letter appears
+	public static String untilLetter(String s) {
+		s = rmSpaces(s);
+		for(int i = 0; i < s.length(); i++) {
+			if(Pattern.matches("^[\\u4E00-\\u9FA5A-Za-z0-9]+$", "" + s.charAt(i))) {
+				return s.substring(i);
 			}
 		}
 		return "";

@@ -1,70 +1,69 @@
-#DMIAE-CLI语法:
+#DMIAE Syntax:
 
-##剧本起始段：
+##Script Headers: 
 
-以*@*开头，声明所有角色，每个一行  
-如果需要，在角色名后加：来追加描述  
-如果角色有多个别名，使用，将它们隔开  
-任何在剧本中出现的角色名都应当被声明，否则将被解析为全体台词  
-声明的角色名应当与在剧本中称呼该角色的方式**完全一致**  
-如果没能保证完全一致，那么该角色出现时**每个**使用过的名字都要被声明  
-不要出现有歧义的名字，如有同名不同姓的角色，那么不要简写名  
-DMIAE生成文档时会默认以最长的名字称呼角色  
-*All, Everyone*类似保留词已经预先声明，可以忽略  
-当然也可以自己声明一遍
+With the *@* prefix，declare all characters，one per line.  
+If necessary, colons(:) can be used after character names to write descriptions.  
+For characters with multiple aliases, use commas(,) to separate each alias.
+Any characters that appears in the script must be declared, unless they'll be identified as part of other characters' line.
+Character names that declared in the header should be **EXACTLY THE SAME** as they appear in the script.  
+If there are spell errors，**ALL** names, even misspelled ones, should be declared.  
+It's better to avoid name ambiguities, for example, don't just refer to the first name when two characters both have it.
+DMIAE, by default, prioritises to use the longest name of character.(To avoid ambiguities)  
+*All, Everyone* and such is declared as fallback, you can also manually declare them again.  
 
 	@Hamilton:the main character	//OK
-	@Hamilton,HAMILTON,HAMILTON XXX	//如果称呼方式不同，必须这么做
+	@Hamilton,HAMILTON,HAMILTON XXX	//If you refer to Hamilton in multiple ways this is compulsory.
 	@Elle,Legally Blonde	//OK
-	@Chief Justice a maniac	//非法，角色名会被识别为Chief Justice a maniac
+	@Chief Justice a maniac	//Invalid，The name will be identified as "Chief Justice a maniac"
 	
-以*#*开头，指定该剧本的属性（可以由DMIAE-CLI自动生成）  
-属性不区分大小写  
-属性是键值对，键与值之间用冒号区分
-如生成演示文稿时其背景等  
-使用*[]*指定该属性的作用域  
+With the prefix *#*，set properties of the script.  
+Properties are case-insensitive.  
+A property is a key-value pair, key and value is separated with a comma(,).  
+For example, the background of the generated slideshow can be set.  
+*[]* is used to limit the property in a domain.  
 
 	#ppt.Fill:0, 0, 0	//OK
 	#[Subline 1]ppt.FontSize:36
-	#TolerateCNChar	//加入这行以容忍使用全角字符进行声明操作等
+	#TolerateCNChar	//Add this to tolerate usage of full-width characters.
 	
-随后，使用*#END*来结束起始段，开始正文  
+Finally, use #END to end headers and begin the content.  
 	
-##剧本主体段：
+##Script Contents: 
 
-角色名与正文间应当有分隔符，常见的形式如冒号，回车，空格  
-不可以使用字母或汉字作为分隔符  
-再次强调角色名应当与声明中的角色名完全一致  
-全体台词可以使用All, Everyone等保留字  
-DMIAE顺次检索角色名，发现一个角色名后，直到下一个角色名出现前的台词都会被认为是该角色的台词，因此对白中注意不要漏写角色名  
+There should be a clear separation between character names and their lines, colons, commas, spaces and such are acceptable.  
+Letters, in any form, is not accepted.  
+If DMIAE doesn't identify a explicitly written character name, it treats this as the continuation of lines of previous character.  
+So don't forget to explicitly change the character.  
 
 	Elle: I feel so much better,
 	I feel so much better,
 	Elle
 		I feel so much better than before	//OK
 
-	Burr How does a bastard, son of a whore	//可以但不推荐，因为会有歧义，需要手动确认
+	Burr How does a bastard, son of a whore	//Not recommended, since it's ambiguous whether Burr is the speaker or just mentioned by the real speaker.
 
 	Emmett: Don't spend hours on my hair
-	(I don't spend hours)	//非法，Elle的台词必须指定Elle名字在前
+	(I don't spend hours)	//Invalid，since this line is Elle's, Elle's name must be clearly written.
 
-多个角色合唱的台词之前的角色名应用斜线(/)将各个角色分开
-每个角色的每个名字不可以重复出现，否则格式会混乱
-同一角色的不同名字可以多次出现(但是谁会那么干）
-当发现这类多角色合唱时，DMIAE会要求手动确认这是一个合唱台词还是格式很奇怪的台词
+If a line is for multiple characters, use slash(/) to separate them.  
+Never write the same for the same character multiple times.  
+You could write different alias of the same character.(Man, who'll do that)  
 
 	HAMILTON/MULLIGAN/LAURENS/LAFAYETTE/向奕帆/吴小有/孙子璇/严周隽
 	I am not throwing away my shot.
-	我绝不放过良机	//可以，但是注意这样需要声明@HAMILTON,向奕帆，否则DMIAE会将后面部分识别为台词的一部分
+	我绝不放过良机	//OK，but both "HAMILTON" and "向奕帆" must be declared, otherwise the next part will be identified as part of the line.
 	
 	HAMILTON/MULLIGAN/LAURENS/LAFAYETTE 向奕帆/吴小有/孙子璇/严周隽
-	//但是这样不可以，DMIAE会将LAFAYETTE 向奕帆认为是一个角色，从而引起多重角色未声明报错
+	//But not this，DMIAE will treat "LAFAYETTE 向奕帆" as a single character，causing errors.
 
-对台词的附加台词（使用该功能追加翻译）  
-附加台词不必再声明角色  
-使用*<:*或者*:*代表附加于前方，*>:*附加于后方  
-如果附加台词遵循特定格式：如，两行台词为一组（尤其用于翻译中）  
-则可以通过声明段指定属性*#SublineFormat=0,1* : 对于每一行台词，前方有0行附加台词，后方有1行附加台词  
+You can attach lines to other lines（Translations are done by this feature）  
+The attached lines are called Sublines.  
+By default they inherit their attached line's character.  
+However you can also explicitly indicate a character(TODO).  
+Use *<:* or *:* to attach to previous main line. Use *>:* to attach to next main line.  
+If sublines follow a certain format: for example in translation.  
+Then you can set the property *#SublineFormat=0,1*, which means for each main line there are 0 sublines attached previously and 1 attached afterwards.
 
 	>:全体目光向我看齐，我宣布个事！	//OK
 	Carlos: Peoples, I have a big announcement!
@@ -81,30 +80,15 @@ DMIAE顺次检索角色名，发现一个角色名后，直到下一个角色名
 	It's hard to guarantee.
 	这可不好确认。	//OK
 	
-DMIAE解析器标记符号为*#*  
-使用解析器标记符号以标记一些DMIAE解析器应当特殊对待的地方。  
-运行时的标记与起始段的全局标记无本质区别，但是当DMIAE解析器读取该行时才会被执行。  
-例如，当剧本中出现单纯说角色名字的语句，因此无需翻译时：
+You can add Annotations to the lines，like lighting，music scripting，or just notes.  
+Use *<@* to add annotation for the previous line. Use *@* or *>@* to add for the next line.  
+Annotations are in the format *<@ : Type of Annotation : Content*  
+If Type is left blank it will be seen as a note.
 
-	#SublineFormat=0,1
-	Callahan: Ms... Elle...
-	嗯……Elle……
-	#SublineFormat=0,0
-	Elle: Woods! Elle Woods.
-	#SublineFormat=0,1
-	Callahan: Well, someone had had their morning coffee.
-	嗯，有人一大早就精力充沛啊。
-不过，这么费劲还不如打个空行或者把名字抄一遍
-	
-对台词的注解，如添加灯光，音乐进入时机，笔记等  
-使用*<@*代表注解在前方的台词上，*@*或者*>@*注解在后方的台词上  
-注解的格式是*<@ : 注解类型 : 内容*  
-若注解类型省略则默认为笔记型注解  
-
-所有注解类型：
-1. 灯光：LIGHTING LIGHT LT L
-2. 笔记：NOTE NT N
-3. 音频：AUDIO MUSIC SOUND A
+Types of Annotation：
+1. Lighting：LIGHTING LIGHT LT L
+2. Note：NOTE NT N
+3. Audio：AUDIO MUSIC SOUND A
 4. 
 
 	@:L:红1面2
@@ -116,8 +100,34 @@ DMIAE解析器标记符号为*#*
 	<@:Callahan关门
 	<@:AUDIO:Blood in the water结束
 	
+Two consecutive colons(::) forcedly mark the line as a main line, bypassing detection of sublines and annotations.  
+If there are a few lines that does not follow format set in SublineFormat, you can utilise this.
+SublineFormat will not count the forcedly marked main line.
+So it's recommended to forcedly mark the next line after a single line as main line.
+
+	#SublineFormat:0,1
+
+	you never learned to take your time!
+	你急不可待
+	Oh, Alexander Hamilton		//This is a single line.
+	::When America sings for you	//Without a forced mark, this will be identified as a subline according to the format.
+	美利坚歌颂你时
+	Will they know what you overcame?
+	会否知晓  你的辉煌经历
+
+DMIAE Resolver accepts runtime annotations with prefix *#*.  
+(TODO)
+
+	#SublineFormat=0,1
+	Callahan: Ms... Elle...
+	嗯……Elle……
+	#SublineFormat=0,0
+	Elle: Woods! Elle Woods.
+	#SublineFormat=0,1
+	Callahan: Well, someone had had their morning coffee.
+	嗯，有人一大早就精力充沛啊。 
 	
-一段遵循DMIAE语法的剧本示例:  
+An example of script that follows DMIAE syntax:  
 
 	#Name:Legally Blonde
 	#Author:forgot
