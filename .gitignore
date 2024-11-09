@@ -6,6 +6,7 @@ classes/
 *.launch
 .settings/
 .vscode/
+.metadata/
 bin/
 .classpath
 .project

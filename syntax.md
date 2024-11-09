@@ -1,6 +1,6 @@
-#DMIAE Syntax:
+# DMIAE Syntax:
 
-##Script Headers: 
+## Script Headers: 
 
 With the *@* prefix，declare all characters，one per line.  
 If necessary, colons(:) can be used after character names to write descriptions.  
@@ -29,7 +29,7 @@ For example, the background of the generated slideshow can be set.
 	
 Finally, use #END to end headers and begin the content.  
 	
-##Script Contents: 
+## Script Contents: 
 
 There should be a clear separation between character names and their lines, colons, commas, spaces and such are acceptable.  
 Letters, in any form, is not accepted.  
