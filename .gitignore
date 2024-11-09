@@ -1,0 +1,12 @@
+bin/
+build/
+out/
+.gradle/
+classes/
+*.launch
+.settings/
+.vscode/
+bin/
+.classpath
+.project
+run/
