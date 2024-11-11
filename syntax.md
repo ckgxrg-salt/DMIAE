@@ -89,7 +89,7 @@ Types of Annotation：
 1. Lighting：LIGHTING LIGHT LT L
 2. Note：NOTE NT N
 3. Audio：AUDIO MUSIC SOUND A
-4. 
+4. Character: CHARACTER CHARA CH C
 
 	@:L:红1面2
 	All: Blood in the water.

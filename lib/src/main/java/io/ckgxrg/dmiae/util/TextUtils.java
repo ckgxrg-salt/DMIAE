@@ -7,13 +7,14 @@ import java.util.regex.Pattern;
 
 /** This class provides some useful utilities with texts. */
 public class TextUtils {
-
   /**
-   * Remove leading spaces.
+   * Remove leading spaces. But why not use String.strip() instead?
    *
+   * @since 24/11/11
    * @param s The String to work on
    * @return The processed String
    */
+  @Deprecated
   public static String rmSpaces(String s) {
     String ss = "";
     for (int i = 0; i < s.length(); i++) {
@@ -31,29 +32,26 @@ public class TextUtils {
   }
 
   /**
-   * Remove character names.
+   * Remove first occurrence of a character name.
    *
    * @param s The String to work on
    * @param name The character name to remove
    * @return The processed String
    */
   public static String rmName(String s, String name) {
-    String[] sss = s.split(name);
-    if (sss.length <= 1) {
-      return "";
-    }
-    String ss = sss[1];
+    int index = s.indexOf(name);
+    String ss = s.substring(index + name.length());
     return untilLetter(ss);
   }
 
   /**
-   * Trim blank spaces before a String.
+   * Trim symbols before a String.
    *
    * @param s The String to work on
    * @return The processed String
    */
   public static String untilLetter(String s) {
-    s = rmSpaces(s);
+    s = s.stripLeading().stripTrailing();
     for (int i = 0; i < s.length(); i++) {
       if (Pattern.matches("^[\\u4E00-\\u9FA5A-Za-z0-9]+$", "" + s.charAt(i))) {
         return s.substring(i);
@@ -91,7 +89,7 @@ public class TextUtils {
         return AnnotationType.LIGHTING;
       case "AUDIO", "A", "MUSIC", "SOUND":
         return AnnotationType.AUDIO;
-      case "CHARACTER":
+      case "CHARACTER", "CHARA", "CH", "C":
         return AnnotationType.CHARACTER;
       default:
         return AnnotationType.NOTE;

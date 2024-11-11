@@ -191,7 +191,7 @@ public class Resolver implements Runnable {
 
     // Attempt to update the current Character
     identifyChara(currentLine);
-    currentLine = TextUtils.rmSpaces(currentLine);
+    currentLine = currentLine.strip();
     if (currentLine.isBlank()) {
       return;
     }
@@ -257,7 +257,7 @@ public class Resolver implements Runnable {
     int expect = 1;
     String last = "";
     for (String d : names) {
-      d = TextUtils.rmSpaces(d);
+      d = d.strip();
       for (Character c : sc.characters) {
         for (String n : c.names) {
           if (n.equals(d)) {
@@ -327,7 +327,7 @@ public class Resolver implements Runnable {
       System.out.println("\r|==========RESOLVER====STARTS==========|");
       while ((currentLine = br.readLine()) != null) {
         // if(t.isInterrupted()) return;
-        currentLine = TextUtils.rmSpaces(currentLine);
+        currentLine = currentLine.strip();
         if (currentLine.equals("#END")) {
           break;
         }
@@ -338,7 +338,7 @@ public class Resolver implements Runnable {
       currentCharacter.add(Character.Everyone);
       while ((currentLine = br.readLine()) != null) {
         // if(t.isInterrupted()) return;
-        currentLine = TextUtils.rmSpaces(currentLine);
+        currentLine = currentLine.strip();
         readLine();
       }
       System.out.println("|=========READ==LINES==COMPLETE=========|");
