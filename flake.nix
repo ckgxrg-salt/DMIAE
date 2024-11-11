@@ -10,7 +10,7 @@
       inherit system;
     };
   in {
-    devShell.${system} = pkgs.mkShell {
+    devShells.${system}.default = pkgs.mkShell {
       name = "java-dev";
 
       buildInputs = with pkgs; [
