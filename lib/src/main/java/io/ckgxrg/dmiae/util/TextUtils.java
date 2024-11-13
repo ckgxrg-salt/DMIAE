@@ -51,7 +51,7 @@ public class TextUtils {
    * @return The processed String
    */
   public static String untilLetter(String s) {
-    s = s.stripLeading().stripTrailing();
+    s = s.strip();
     for (int i = 0; i < s.length(); i++) {
       if (Pattern.matches("^[\\u4E00-\\u9FA5A-Za-z0-9]+$", "" + s.charAt(i))) {
         return s.substring(i);

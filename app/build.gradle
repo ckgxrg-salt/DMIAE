@@ -13,6 +13,10 @@ application {
   mainClass = 'io.ckgxrg.dmiae.cli.DramaInteractive'
 }
 
+run {
+  standardInput = System.in
+}
+
 compileJava {
   options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
 }

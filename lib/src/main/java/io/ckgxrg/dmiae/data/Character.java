@@ -28,23 +28,26 @@ public class Character {
   public ArrayList<String> names;
   public String desc;
 
+  /** Poor character with no name. */
   public Character() {
     names = new ArrayList<String>();
   }
 
+  /** Construct a Character with the given names. */
   public Character(String... names) {
     this.names = new ArrayList<String>();
-    Arrays.sort(names, (String a, String b) -> Integer.compare(a.length(), b.length()));
     for (String s : names) {
       this.names.add(s);
     }
     this.desc = "";
   }
 
+  /** Adds a description to the Character. */
   public void addDesc(String desc) {
     this.desc = desc;
   }
 
+  /** DMIAE will need one single name to call the Character. */
   public String getAmbiguousName() {
     return (String) names.toArray()[0];
   }

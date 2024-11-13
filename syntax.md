@@ -9,7 +9,7 @@ Any characters that appears in the script must be declared, unless they'll be id
 Character names that declared in the header should be **EXACTLY THE SAME** as they appear in the script.  
 If there are spell errors，**ALL** names, even misspelled ones, should be declared.  
 It's better to avoid name ambiguities, for example, don't just refer to the first name when two characters both have it.
-DMIAE, by default, prioritises to use the longest name of character.(To avoid ambiguities)  
+DMIAE, by default, uses the first defined name of character.(To avoid ambiguities)  
 *All, Everyone* and such is declared as fallback, you can also manually declare them again.  
 
 	@Hamilton:the main character	//OK
@@ -25,7 +25,6 @@ For example, the background of the generated slideshow can be set.
 
 	#ppt.Fill:0, 0, 0	//OK
 	#[Subline 1]ppt.FontSize:36
-	#TolerateCNChar	//Add this to tolerate usage of full-width characters.
 	
 Finally, use #END to end headers and begin the content.  
 	
@@ -50,12 +49,12 @@ If a line is for multiple characters, use slash(/) to separate them.
 Never write the same for the same character multiple times.  
 You could write different alias of the same character.(Man, who'll do that)  
 
-	HAMILTON/MULLIGAN/LAURENS/LAFAYETTE/向奕帆/吴小有/孙子璇/严周隽
+	HAMILTON/MULLIGAN/LAURENS/LAFAYETTE
 	I am not throwing away my shot.
-	我绝不放过良机	//OK，but both "HAMILTON" and "向奕帆" must be declared, otherwise the next part will be identified as part of the line.
+	我绝不放过良机	//OK，but all names above must be declared, otherwise the next part will be identified as part of the line.
 	
-	HAMILTON/MULLIGAN/LAURENS/LAFAYETTE 向奕帆/吴小有/孙子璇/严周隽
-	//But not this，DMIAE will treat "LAFAYETTE 向奕帆" as a single character，causing errors.
+	HAMILTON/MULLIGAN/LAURENS LAFAYETTE
+	//But not this，DMIAE will treat "LAURENS LAFAYETTE" as a single character，causing errors.
 
 You can attach lines to other lines（Translations are done by this feature）  
 The attached lines are called Sublines.  
@@ -63,7 +62,7 @@ By default they inherit their attached line's character.
 However you can also explicitly indicate a character(TODO).  
 Use *<:* or *:* to attach to previous main line. Use *>:* to attach to next main line.  
 If sublines follow a certain format: for example in translation.  
-Then you can set the property *#SublineFormat=0,1*, which means for each main line there are 0 sublines attached previously and 1 attached afterwards.
+Then you can set the property *#sublineFormat=0,1*, which means for each main line there are 0 sublines attached previously and 1 attached afterwards.
 
 	>:全体目光向我看齐，我宣布个事！	//OK
 	Carlos: Peoples, I have a big announcement!
@@ -73,7 +72,7 @@ Then you can set the property *#SublineFormat=0,1*, which means for each main li
 	My name is Alexander Hamilton.
 	:我的名字是Alexander Hamilton。	//OK
 
-	#SublineFormat=0,1
+	#sublineFormat=0,1
 	#END
 	All: Gay or European?
 	基佬还是欧洲人？
@@ -87,7 +86,7 @@ If Type is left blank it will be seen as a note.
 
 Types of Annotation：
 1. Lighting：LIGHTING LIGHT LT L
-2. Note：NOTE NT N
+2. Nose：NOTE NT N
 3. Audio：AUDIO MUSIC SOUND A
 4. Character: CHARACTER CHARA CH C
 
@@ -101,11 +100,11 @@ Types of Annotation：
 	<@:AUDIO:Blood in the water结束
 	
 Two consecutive colons(::) forcedly mark the line as a main line, bypassing detection of sublines and annotations.  
-If there are a few lines that does not follow format set in SublineFormat, you can utilise this.
-SublineFormat will not count the forcedly marked main line.
+If there are a few lines that does not follow format set in sublineFormat, you can utilise this.
+sublineFormat will not count the forcedly marked main line.
 So it's recommended to forcedly mark the next line after a single line as main line.
 
-	#SublineFormat:0,1
+	#sublineFormat=0,1
 
 	you never learned to take your time!
 	你急不可待
@@ -118,7 +117,7 @@ So it's recommended to forcedly mark the next line after a single line as main l
 DMIAE Resolver accepts runtime annotations with prefix *#*.  
 (TODO)
 
-	#SublineFormat=0,1
+	#sublineFormat=0,1
 	Callahan: Ms... Elle...
 	嗯……Elle……
 	#SublineFormat=0,0
@@ -136,7 +135,7 @@ An example of script that follows DMIAE syntax:
 	@Elle
 	@Warner,Warner Huntington IV
 	
-	#SublineFormat:0,1
+	#sublineFormat:0,1
 	#END
 	
 	@:L:粉2面1
