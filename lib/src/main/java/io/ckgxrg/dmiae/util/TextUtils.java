@@ -2,6 +2,7 @@ package io.ckgxrg.dmiae.util;
 
 import io.ckgxrg.dmiae.data.AnnotationType;
 import io.ckgxrg.dmiae.data.Character;
+import io.ckgxrg.dmiae.exceptions.FormatException;
 import java.util.HashSet;
 import java.util.regex.Pattern;
 
@@ -82,8 +83,12 @@ public class TextUtils {
    * @param s The String to work on
    * @return The detected Annotation type
    */
-  public static AnnotationType identifyAnnoType(String s) {
-    String ss = s.split(":")[1];
+  public static AnnotationType identifyAnnoType(String s) throws FormatException {
+    String[] split = s.split(":");
+    if (split.length < 2) {
+      throw new FormatException("Wrong annotation format");
+    }
+    String ss = split[1];
     switch (ss) {
       case "LIGHTING", "LIGHT", "LT", "L":
         return AnnotationType.LIGHTING;
@@ -102,8 +107,11 @@ public class TextUtils {
    * @param s The String to work on
    * @return The content
    */
-  public static String getAnnoContent(String s) {
+  public static String getAnnoContent(String s) throws FormatException {
     String[] ss = s.split(":");
+    if (ss.length < 2) {
+      throw new FormatException("Wrong annotation format");
+    }
     return ss.length <= 2 ? ss[1] : ss[2];
   }
 

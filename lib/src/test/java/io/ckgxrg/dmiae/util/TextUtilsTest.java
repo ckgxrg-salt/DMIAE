@@ -1,11 +1,14 @@
 package io.ckgxrg.dmiae.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.ckgxrg.dmiae.data.AnnotationType;
 import io.ckgxrg.dmiae.data.Character;
+import io.ckgxrg.dmiae.exceptions.FormatException;
 import java.util.HashSet;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -46,30 +49,58 @@ public class TextUtilsTest {
 
   @Test
   public void identifyAnnoTypeTest() {
-    AnnotationType result1 = TextUtils.identifyAnnoType("@:LIGHTING:Red 1 Blue 2");
-    assertEquals(AnnotationType.LIGHTING, result1);
-    AnnotationType result2 = TextUtils.identifyAnnoType("@:L:Red 1 Blue 2");
-    assertEquals(AnnotationType.LIGHTING, result2);
-    AnnotationType result3 = TextUtils.identifyAnnoType("@:MUSIC:Gaster's Theme");
-    assertEquals(AnnotationType.AUDIO, result3);
-    AnnotationType result4 = TextUtils.identifyAnnoType("@:NOTE:Testy!");
-    assertEquals(AnnotationType.NOTE, result4);
-    AnnotationType result5 = TextUtils.identifyAnnoType("@:Hohooh");
-    assertEquals(AnnotationType.NOTE, result5);
+    try {
+      AnnotationType result1 = TextUtils.identifyAnnoType("@:LIGHTING:Red 1 Blue 2");
+      assertEquals(AnnotationType.LIGHTING, result1);
+      AnnotationType result2 = TextUtils.identifyAnnoType("@:L:Red 1 Blue 2");
+      assertEquals(AnnotationType.LIGHTING, result2);
+      AnnotationType result3 = TextUtils.identifyAnnoType("@:MUSIC:Gaster's Theme");
+      assertEquals(AnnotationType.AUDIO, result3);
+      AnnotationType result4 = TextUtils.identifyAnnoType("@:NOTE:Testy!");
+      assertEquals(AnnotationType.NOTE, result4);
+      AnnotationType result5 = TextUtils.identifyAnnoType("@:Hohooh");
+      assertEquals(AnnotationType.NOTE, result5);
+    } catch (FormatException e) {
+      Assertions.fail();
+    }
+  }
+
+  @Test
+  public void identifyAnnoTypeExceptionTest() {
+    assertThrows(
+        FormatException.class,
+        () -> {
+          TextUtils.identifyAnnoType("@This should fail");
+        },
+        "Wrong annotation format");
   }
 
   @Test
   public void getAnnoContentTest() {
-    String result1 = TextUtils.getAnnoContent("@:LIGHTING:Red 1 Blue 2");
-    assertEquals("Red 1 Blue 2", result1);
-    String result2 = TextUtils.getAnnoContent("@:L:Red 1 Blue 2");
-    assertEquals("Red 1 Blue 2", result2);
-    String result3 = TextUtils.getAnnoContent("@:MUSIC:Gaster's Theme");
-    assertEquals("Gaster's Theme", result3);
-    String result4 = TextUtils.getAnnoContent("@:NOTE:Testy!");
-    assertEquals("Testy!", result4);
-    String result5 = TextUtils.getAnnoContent("@:Hohooh");
-    assertEquals("Hohooh", result5);
+    try {
+      String result1 = TextUtils.getAnnoContent("@:LIGHTING:Red 1 Blue 2");
+      assertEquals("Red 1 Blue 2", result1);
+      String result2 = TextUtils.getAnnoContent("@:L:Red 1 Blue 2");
+      assertEquals("Red 1 Blue 2", result2);
+      String result3 = TextUtils.getAnnoContent("@:MUSIC:Gaster's Theme");
+      assertEquals("Gaster's Theme", result3);
+      String result4 = TextUtils.getAnnoContent("@:NOTE:Testy!");
+      assertEquals("Testy!", result4);
+      String result5 = TextUtils.getAnnoContent("@:Hohooh");
+      assertEquals("Hohooh", result5);
+    } catch (FormatException e) {
+      Assertions.fail();
+    }
+  }
+
+  @Test
+  public void getAnnoContentExceptionTest() {
+    assertThrows(
+        FormatException.class,
+        () -> {
+          TextUtils.getAnnoContent("@This should fail");
+        },
+        "Wrong annotation format");
   }
 
   @Test
@@ -81,7 +112,11 @@ public class TextUtilsTest {
     charas.add(chara);
     charas.add(frisk);
     String result = TextUtils.getCharaName(charas);
-    assertEquals("@Chara / @Frisk", result);
+    if (result.equals("@Frisk / @Chara") || result.equals("@Chara / @Frisk")) {
+      Assertions.assertTrue(true);
+    } else {
+      Assertions.fail();
+    }
   }
 
   /** Finish testing. */

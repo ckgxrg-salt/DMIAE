@@ -6,6 +6,7 @@ import io.ckgxrg.dmiae.data.Character;
 import io.ckgxrg.dmiae.data.Line;
 import io.ckgxrg.dmiae.data.Script;
 import io.ckgxrg.dmiae.data.Subline;
+import io.ckgxrg.dmiae.exceptions.FormatException;
 import io.ckgxrg.dmiae.util.TextUtils;
 import java.io.BufferedReader;
 import java.io.File;
@@ -59,7 +60,7 @@ public class Parser implements Runnable {
    */
   public void begin(File file) {
     src = file;
-    thread = new Thread(this, "dmiae-resolver");
+    thread = new Thread(this, "dmiae-parser");
     thread.start();
   }
 
@@ -163,12 +164,16 @@ public class Parser implements Runnable {
       }
       contentSrc = cache.toString();
     } catch (NumberFormatException e) {
-      System.err.println("===>[Parser] Value of #sublineFormat is invalid, skipping...");
+      System.err.println("===>[Parser] Value of #sublineFormat is invalid, disabling...");
       e.printStackTrace();
       return;
     } catch (IOException e) {
       System.err.println("===>[Parser] Unexpected error");
       e.printStackTrace();
+    } catch (ArrayIndexOutOfBoundsException e) {
+      System.err.println("===>[Parser] Value of #sublineFormat is invalid, disabling...");
+      e.printStackTrace();
+      return;
     }
   }
 
@@ -304,18 +309,23 @@ public class Parser implements Runnable {
    * @return Whether this line is an annotation or not
    */
   boolean readAnno() {
-    if (currentLine.startsWith("@") || currentLine.startsWith(">@")) {
-      heldAnnos.add(
-          new Annotation(
-              TextUtils.getAnnoContent(currentLine), TextUtils.identifyAnnoType(currentLine)));
-      return true;
-    } else if (currentLine.startsWith("<@")) {
-      AnnotationType t = TextUtils.identifyAnnoType(currentLine);
-      Annotation a = new Annotation(TextUtils.getAnnoContent(currentLine), t);
-      a.parent = generated.lines.getLast();
-      generated.lines.getLast().addAnnotationAfter(a);
-      System.out.println("^===" + t.toString() + ": " + TextUtils.getAnnoContent(currentLine));
-      return true;
+    try {
+      if (currentLine.startsWith("@") || currentLine.startsWith(">@")) {
+        heldAnnos.add(
+            new Annotation(
+                TextUtils.getAnnoContent(currentLine), TextUtils.identifyAnnoType(currentLine)));
+        return true;
+      } else if (currentLine.startsWith("<@")) {
+        AnnotationType t = TextUtils.identifyAnnoType(currentLine);
+        Annotation a = new Annotation(TextUtils.getAnnoContent(currentLine), t);
+        a.parent = generated.lines.getLast();
+        generated.lines.getLast().addAnnotationAfter(a);
+        System.out.println("^===" + t.toString() + ": " + TextUtils.getAnnoContent(currentLine));
+        return true;
+      }
+    } catch (FormatException e) {
+      System.err.println("===>[Parser] Wrong Annotation format, skipping...");
+      return false;
     }
     return false;
   }
