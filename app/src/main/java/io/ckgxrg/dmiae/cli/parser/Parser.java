@@ -1,5 +1,6 @@
 package io.ckgxrg.dmiae.cli.parser;
 
+import io.ckgxrg.dmiae.cli.DramaInteractive;
 import io.ckgxrg.dmiae.data.Annotation;
 import io.ckgxrg.dmiae.data.AnnotationType;
 import io.ckgxrg.dmiae.data.Character;
@@ -10,35 +11,35 @@ import io.ckgxrg.dmiae.exceptions.FormatException;
 import io.ckgxrg.dmiae.util.TextUtils;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Scanner;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 
 /**
  * The Drama.Interactive resolver. Intended to be called as $dmiae resolve raw file. Reads
  * instructions and lines from raw DMIAE formatted text files.
  */
-public class Parser implements Runnable {
+public class Parser implements Callable<Optional<Script>> {
 
   // Source of the file
   File src;
-  String configSrc;
-  String contentSrc;
+  ArrayList<String> configSrc;
+  ArrayList<String> contentSrc;
 
   // Markers for current line
   Script generated;
-  String currentLine;
   HashSet<Character> currentCharacter;
+  String currentLine;
+  int currentIndex;
 
   // Runtime
   public static Parser INSTANCE;
-  public Thread thread;
   public Flags flags;
+  public boolean verbose;
 
   // Sublines and Annotations that are queued to be applied
   public ArrayList<Subline> heldSublines;
@@ -49,8 +50,8 @@ public class Parser implements Runnable {
    *
    * @param file Path to the script file
    */
-  public void begin(String file) {
-    begin(new File(file));
+  public Parser(File file) {
+    this(file, false);
   }
 
   /**
@@ -58,37 +59,39 @@ public class Parser implements Runnable {
    *
    * @param file Path to the script file
    */
-  public void begin(File file) {
+  public Parser(File file, boolean verbose) {
     src = file;
-    thread = new Thread(this, "dmiae-parser");
-    thread.start();
+    this.verbose = verbose;
   }
 
   /** The thread main method. Do not invoke manually, use @see Resolver.start() instead. */
   @Override
-  public void run() {
+  public Optional<Script> call() {
     INSTANCE = this;
-    System.out.println("|==========PARSER====STARTS==========|");
+    System.out.println("===>[Parser] Started.");
     overview();
+    if (Thread.currentThread().isInterrupted()) {
+      return Optional.empty();
+    }
     parseConfig();
     applySublineFormat();
-    System.out.println("|==========READ==LINES==BEGIN==========|");
+    System.out.println("===>[Parser] Begin reading lines.");
     // Default to the fallback character
     currentCharacter.add(Character.Everyone);
     readLine();
-    System.out.println("|=========READ==LINES==COMPLETE=========|");
-    try (ObjectOutputStream obj = new ObjectOutputStream(new FileOutputStream("dmiae.out"))) {
-      obj.writeObject(generated);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    System.out.println("===>[Parser] Finished.");
+    return Optional.of(generated);
   }
 
+  // Internal zone
+
   void overview() {
+    configSrc = new ArrayList<String>();
+    contentSrc = new ArrayList<String>();
+    boolean config = true;
     try (BufferedReader br = new BufferedReader(new FileReader(src))) {
       System.out.println("===>[Parser] Evaluating file: " + src.toString());
       String line;
-      StringBuilder cache = new StringBuilder();
       // Read the header section
       while ((line = br.readLine()) != null) {
         line = line.strip();
@@ -96,25 +99,29 @@ public class Parser implements Runnable {
           continue;
         }
         if (line.equals("#END")) {
-          configSrc = cache.toString();
-          cache = new StringBuilder();
+          config = false;
           continue;
         }
-        cache.append(line + "\n");
+        if (config) {
+          configSrc.add(line);
+        } else {
+          contentSrc.add(line);
+        }
       }
-      contentSrc = cache.toString();
       // Validate
       if (configSrc.isEmpty()) {
         System.err.println("===>[Parser] Cannot make much sense, no header section found.");
-        System.exit(1);
+        Thread.currentThread().interrupt();
       }
       if (contentSrc.isEmpty()) {
         System.err.println("===>[Parser] Cannot make much sense, no content section found.");
-        System.exit(1);
+        Thread.currentThread().interrupt();
       }
     } catch (IOException io) {
       System.err.println("===>[Parser] Unexpected IO error");
       io.printStackTrace();
+      Thread.currentThread().interrupt();
+      return;
     }
   }
 
@@ -123,17 +130,13 @@ public class Parser implements Runnable {
     flags = new Flags();
     generated = new Script();
     currentCharacter = new HashSet<Character>();
-    try (BufferedReader br = new BufferedReader(new StringReader(configSrc))) {
-      while ((currentLine = br.readLine()) != null) {
-        if (currentLine.startsWith("@")) {
-          Character c = ConfigParser.identifyCharacter(currentLine.substring(1));
-          generated.characters.add(c);
-        } else if (currentLine.startsWith("#")) {
-          ConfigParser.parseFlag(currentLine.substring(1));
-        }
+    for (String currentLine : configSrc) {
+      if (currentLine.startsWith("@")) {
+        Character c = ConfigParser.identifyCharacter(currentLine.substring(1));
+        generated.characters.add(c);
+      } else if (currentLine.startsWith("#")) {
+        ConfigParser.parseFlag(currentLine.substring(1));
       }
-    } catch (IOException io) {
-      io.printStackTrace();
     }
   }
 
@@ -144,32 +147,29 @@ public class Parser implements Runnable {
       System.err.println("===>[Parser] Value of #sublineFormat is invalid, skipping...");
       return;
     }
-    try (BufferedReader br = new BufferedReader(new StringReader(contentSrc))) {
+    try {
       int prevCount = Integer.valueOf(split[0].strip());
       int afterCount = Integer.valueOf(split[1].strip());
       int p = 0;
       int a = 0;
       boolean prev = true;
-      StringBuilder cache = new StringBuilder();
-      while ((currentLine = br.readLine()) != null) {
+      ArrayList<String> overwrite = new ArrayList<String>();
+      for (String currentLine : contentSrc) {
         if (prev && p < prevCount) {
-          cache.append(">:" + currentLine + "\n");
+          overwrite.add(">:" + currentLine);
           p++;
         } else if (!prev && a < afterCount) {
-          cache.append("<:" + currentLine + "\n");
+          overwrite.add("<:" + currentLine);
         } else if (p == prevCount || a == afterCount) {
           prev = !prev;
-          cache.append(currentLine + "\n");
+          overwrite.add(currentLine);
         }
       }
-      contentSrc = cache.toString();
+      contentSrc = overwrite;
     } catch (NumberFormatException e) {
       System.err.println("===>[Parser] Value of #sublineFormat is invalid, disabling...");
       e.printStackTrace();
       return;
-    } catch (IOException e) {
-      System.err.println("===>[Parser] Unexpected error");
-      e.printStackTrace();
     } catch (ArrayIndexOutOfBoundsException e) {
       System.err.println("===>[Parser] Value of #sublineFormat is invalid, disabling...");
       e.printStackTrace();
@@ -181,32 +181,29 @@ public class Parser implements Runnable {
   void readLine() {
     heldAnnos = new ArrayList<Annotation>();
     heldSublines = new ArrayList<Subline>();
-    try (BufferedReader br = new BufferedReader(new StringReader(contentSrc))) {
-      while ((currentLine = br.readLine()) != null) {
-        // Try to update current character
-        updateChara(currentLine);
-        if (currentLine.isBlank()) {
-          continue;
-        }
-
-        // Forced read main line
-        if (currentLine.startsWith("::")) {
-          currentLine = TextUtils.untilLetter(currentLine);
-          readMainLine();
-          continue;
-        }
-
-        // Annotation and Subline detection
-        if (readAnno()) {
-          continue;
-        }
-        if (readSubline()) {
-          continue;
-        }
-        readMainLine();
+    for (currentIndex = 0; currentIndex < contentSrc.size(); currentIndex++) {
+      currentLine = contentSrc.get(currentIndex);
+      // Try to update current character
+      updateChara(currentLine);
+      if (currentLine.isBlank()) {
+        continue;
       }
-    } catch (IOException io) {
-      io.printStackTrace();
+
+      // Forced read main line
+      if (currentLine.startsWith("::")) {
+        currentLine = TextUtils.untilLetter(currentLine);
+        readMainLine();
+        continue;
+      }
+
+      // Annotation and Subline detection
+      if (readAnno()) {
+        continue;
+      }
+      if (readSubline()) {
+        continue;
+      }
+      readMainLine();
     }
   }
 
@@ -224,7 +221,10 @@ public class Parser implements Runnable {
     // Try the declared characters
     for (Character c : generated.characters) {
       for (String ss : c.names) {
-        if (s.startsWith(ss) && checkAmbiguity(currentLine, ss)) {
+        if (s.startsWith(ss)
+            // Ensure there's at least some separation between name and line.
+            && !Pattern.matches("^[\\u4E00-\\u9FA5A-Za-z0-9]+$", "" + s.split(ss)[1].charAt(0))
+            && checkAmbiguity(currentLine, ss)) {
           currentLine = TextUtils.rmName(currentLine, ss);
           currentLine = currentLine.strip();
           currentCharacter.clear();
@@ -320,7 +320,9 @@ public class Parser implements Runnable {
         Annotation a = new Annotation(TextUtils.getAnnoContent(currentLine), t);
         a.parent = generated.lines.getLast();
         generated.lines.getLast().addAnnotationAfter(a);
-        System.out.println("^===" + t.toString() + ": " + TextUtils.getAnnoContent(currentLine));
+        if (verbose) {
+          System.out.println("^===" + t.toString() + ": " + TextUtils.getAnnoContent(currentLine));
+        }
         return true;
       }
     } catch (FormatException e) {
@@ -343,7 +345,9 @@ public class Parser implements Runnable {
       Subline s = new Subline(currentLine, currentCharacter);
       s.parent = generated.lines.getLast();
       generated.lines.getLast().addSublineAfter(s);
-      System.out.println("\t" + currentLine);
+      if (verbose) {
+        System.out.println("\t" + currentLine);
+      }
       return true;
     }
     return false;
@@ -356,17 +360,23 @@ public class Parser implements Runnable {
     for (Annotation a : heldAnnos) {
       a.parent = l;
       l.addAnnotationBefore(a);
-      System.out.println("V===" + a.type.toString() + ": " + a.content);
+      if (verbose) {
+        System.out.println("V===" + a.type.toString() + ": " + a.content);
+      }
     }
     for (Subline s : heldSublines) {
       s.characters = l.characters;
       l.addSublineBefore(s);
-      System.out.println("V\t" + currentLine);
+      if (verbose) {
+        System.out.println("V\t" + currentLine);
+      }
     }
     heldAnnos.clear();
     heldSublines.clear();
     generated.lines.add(l);
-    System.out.println(TextUtils.getCharaName(currentCharacter) + ": " + currentLine);
+    if (verbose) {
+      System.out.println(TextUtils.getCharaName(currentCharacter) + ": " + currentLine);
+    }
   }
 
   /**
@@ -382,12 +392,18 @@ public class Parser implements Runnable {
       if (line.split(name)[1].isBlank()) {
         return true;
       }
-      System.out.println("===>[Parser] Ambiguity detected at: " + line);
-      try (Scanner sc = new Scanner(System.in)) {
-        System.out.print("===>[Parser] Should this line be " + name + "'s? (y/N):");
-        String ss = sc.nextLine();
-        return ss.equalsIgnoreCase("y");
+      System.out.println("===>[Parser] In the following context: ");
+      for (int i = currentIndex - 10; i < currentIndex + 10; i++) {
+        if (i == currentIndex) {
+          System.out.println("Here-> " + line);
+          continue;
+        }
+        System.out.println("       " + contentSrc.get(i));
       }
+      System.out.println("===>[Parser] Ambiguity detected at: " + line);
+      System.out.print("===>[Parser] Should this line be " + name + "'s? (y/N):");
+      String ss = DramaInteractive.scanner.nextLine();
+      return ss.equalsIgnoreCase("y");
     }
     return true;
   }

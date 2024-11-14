@@ -16,7 +16,9 @@ public class ConfigParser {
     String[] name = ss[0].split(",");
     Character c = new Character(name);
     c.addDesc(desc);
-    System.out.println("Character: @" + s);
+    if (Parser.INSTANCE.verbose) {
+      System.out.println("Character: @" + s);
+    }
     return c;
   }
 
@@ -25,7 +27,9 @@ public class ConfigParser {
     String key = s.split(":")[0].toLowerCase();
     String value = s.split(":")[1];
     try {
-      System.out.println("Property #" + key + " set to " + value);
+      if (Parser.INSTANCE.verbose) {
+        System.out.println("Property #" + key + " set to " + value);
+      }
       Field f = Parser.INSTANCE.flags.getClass().getDeclaredField(key);
       f.set(Parser.INSTANCE.flags, Optional.of(value));
       f.setAccessible(true);
