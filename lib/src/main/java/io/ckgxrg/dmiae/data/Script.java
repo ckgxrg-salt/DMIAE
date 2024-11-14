@@ -1,10 +1,14 @@
 package io.ckgxrg.dmiae.data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 
 /** Represents all datas in a script. */
-public class Script {
+public class Script implements Serializable {
+
+  private static final long serialVersionUID = 1883834815399394973L;
+
   public String name;
   public String author;
   public String credits;

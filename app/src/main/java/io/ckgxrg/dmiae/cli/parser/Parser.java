@@ -9,8 +9,10 @@ import io.ckgxrg.dmiae.data.Subline;
 import io.ckgxrg.dmiae.util.TextUtils;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -74,6 +76,11 @@ public class Parser implements Runnable {
     currentCharacter.add(Character.Everyone);
     readLine();
     System.out.println("|=========READ==LINES==COMPLETE=========|");
+    try (ObjectOutputStream obj = new ObjectOutputStream(new FileOutputStream("dmiae.out"))) {
+      obj.writeObject(generated);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   void overview() {

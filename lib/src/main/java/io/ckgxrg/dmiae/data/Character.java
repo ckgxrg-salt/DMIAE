@@ -1,11 +1,14 @@
 package io.ckgxrg.dmiae.data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
 /** Data structure of a Character. */
-public class Character {
+public class Character implements Serializable {
+
+  private static final long serialVersionUID = 1883834815399394973L;
 
   // Fallback Characters, if none of declared characters identified DMIAE will attempt these.
   public static Character Everyone =

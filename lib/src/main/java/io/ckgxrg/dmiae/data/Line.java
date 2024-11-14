@@ -1,11 +1,14 @@
 package io.ckgxrg.dmiae.data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
 /** Represents a line in the scripts. */
-public class Line {
+public class Line implements Serializable {
+
+  private static final long serialVersionUID = 1883834815399394973L;
 
   public String text;
   public Collection<Character> characters;
