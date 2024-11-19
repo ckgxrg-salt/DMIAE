@@ -13,7 +13,7 @@ import picocli.CommandLine.Command;
     description =
         "DraMa.InterActivE, a tool that helps format drama scripts and export them in different"
             + " formats.",
-    subcommands = RawGenerator.class)
+    subcommands = RawParser.class)
 public class DramaInteractive implements Callable<Integer> {
 
   public static Scanner scanner;

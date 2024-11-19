@@ -18,7 +18,7 @@ import picocli.CommandLine.Parameters;
 
 /** Subcommand called when asked to parse an original text file to DMIAE raw file. */
 @Command(name = "parse", description = "Parse a text file to DMIAE raw format.")
-public class RawGenerator implements Callable<Integer> {
+public class RawParser implements Callable<Integer> {
 
   @Parameters(index = "0", description = "Path to the file to be parsed.")
   private File file;
@@ -52,19 +52,19 @@ public class RawGenerator implements Callable<Integer> {
         System.out.println("===>[DMIAE] Wrote generated DMIAE file to " + outPath);
         objOut.close();
       } else {
-        System.err.println("===>[DMIAE] Parser failed.");
+        System.err.println("===>[DMIAE] Parser failed");
         return 1;
       }
     } catch (IOException e) {
-      System.err.println("===>[DMIAE] Unable to save the file.");
+      System.err.println("===>[DMIAE] Unable to save the file");
       e.printStackTrace();
       return 1;
     } catch (InterruptedException e) {
-      System.err.println("===>[DMIAE] Interrupted.");
+      System.err.println("===>[DMIAE] Interrupted");
       e.printStackTrace();
       return 1;
     } catch (ExecutionException e) {
-      System.err.println("===>[DMIAE] Parser execution returned error.");
+      System.err.println("===>[DMIAE] Parser execution returned error");
       e.printStackTrace();
       return 1;
     }

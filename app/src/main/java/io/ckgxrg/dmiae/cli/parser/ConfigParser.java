@@ -24,8 +24,8 @@ public class ConfigParser {
 
   /** Called when a parser flag statement is read. */
   protected static void parseFlag(String s) {
-    String key = s.split(":")[0].toLowerCase();
-    String value = s.split(":")[1];
+    String key = s.split(":")[0].toLowerCase().strip();
+    String value = s.split(":")[1].strip();
     try {
       if (Parser.INSTANCE.verbose) {
         System.out.println("Property #" + key + " set to " + value);
