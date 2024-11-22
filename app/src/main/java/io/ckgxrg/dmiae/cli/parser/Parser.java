@@ -38,12 +38,14 @@ public class Parser implements Callable<Optional<Script>> {
 
   // Runtime
   public static Parser INSTANCE;
-  public Flags flags;
   public boolean verbose;
 
   // Sublines and Annotations that are queued to be applied
   public ArrayList<Subline> heldSublines;
   public ArrayList<Annotation> heldAnnos;
+
+  // Flags area
+  public String sublineformat;
 
   /**
    * Starts the Revolver.
@@ -68,18 +70,20 @@ public class Parser implements Callable<Optional<Script>> {
   @Override
   public Optional<Script> call() {
     INSTANCE = this;
-    System.out.println("===>[Parser] Started.");
+    System.out.println("===>[Parser] Started");
     overview();
     if (Thread.currentThread().isInterrupted()) {
       return Optional.empty();
     }
-    parseConfig();
-    applySublineFormat();
-    System.out.println("===>[Parser] Begin reading lines.");
+    parseProps();
+    Preprocess.applySublineFormat(
+        flags.sublineformat.orElse(Flags.DEFAULT_SUBLINEFORMAT), contentSrc);
+    System.out.println("===>[Parser] Begin reading lines");
+    flags = new Flags();
     // Default to the fallback character
     currentCharacter.add(Character.Everyone);
     readLine();
-    System.out.println("===>[Parser] Finished.");
+    System.out.println("===>[Parser] Finished");
     return Optional.of(generated);
   }
 
@@ -126,56 +130,21 @@ public class Parser implements Callable<Optional<Script>> {
   }
 
   /** Read instructions from the headers. */
-  void parseConfig() {
-    flags = new Flags();
+  void parseProps() {
     generated = new Script();
     currentCharacter = new HashSet<Character>();
     for (String currentLine : configSrc) {
       if (currentLine.startsWith("@")) {
-        Character c = ConfigParser.identifyCharacter(currentLine.substring(1));
+        Character c = ConfigParser.identifyCharacter(currentLine.substring(1), verbose);
         generated.characters.add(c);
       } else if (currentLine.startsWith("#")) {
-        ConfigParser.parseFlag(currentLine.substring(1));
+        ConfigParser.parseProp(currentLine.substring(1), generated.props, verbose);
       }
     }
   }
 
-  /** Generate subline markers defined by #sublineFormat. */
-  void applySublineFormat() {
-    String[] split = flags.sublineformat.orElse("0,0").split(",");
-    if (split.length != 2) {
-      System.err.println("===>[Parser] Value of #sublineFormat is invalid, skipping...");
-      return;
-    }
-    try {
-      int prevCount = Integer.valueOf(split[0].strip());
-      int afterCount = Integer.valueOf(split[1].strip());
-      int p = 0;
-      int a = 0;
-      boolean prev = true;
-      ArrayList<String> overwrite = new ArrayList<String>();
-      for (String currentLine : contentSrc) {
-        if (prev && p < prevCount) {
-          overwrite.add(">:" + currentLine);
-          p++;
-        } else if (!prev && a < afterCount) {
-          overwrite.add("<:" + currentLine);
-        } else if (p == prevCount || a == afterCount) {
-          prev = !prev;
-          overwrite.add(currentLine);
-        }
-      }
-      contentSrc = overwrite;
-    } catch (NumberFormatException e) {
-      System.err.println("===>[Parser] Value of #sublineFormat is invalid, disabling...");
-      e.printStackTrace();
-      return;
-    } catch (ArrayIndexOutOfBoundsException e) {
-      System.err.println("===>[Parser] Value of #sublineFormat is invalid, disabling...");
-      e.printStackTrace();
-      return;
-    }
-  }
+  /** Apply sublineformat. */
+  void applySublineFormat() {}
 
   /** Read actual lines, sublines and annotations. */
   void readLine() {

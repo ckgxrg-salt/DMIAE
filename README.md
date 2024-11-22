@@ -1,7 +1,7 @@
 # DraMa.InterActivE - DMIAE  
-# A simple tool to unify scripts for school drama club.
 
-It defines a syntax to define a script, and some utilities to work with this format.   
+A simple tool to unify scripts for school drama club.   
+It defines a syntax for a script, and some utilities to work with this format.   
 
 # Syntax
 ## Header
@@ -11,12 +11,12 @@ The header section defines some important details about the script itself.
 Declare all characters with the *@* prefix，one per line.   
 If necessary, colons(:) can be used after character names to write descriptions.   
 For characters with multiple aliases, use commas(,) to separate each alias.   
-Any characters that appears in the script must be declared, unless they'll be identified as part of other characters' line.   
+Any characters that appears in the script must be declared, otherwise they'll be identified as part of other characters' line.   
 Character names that declared in the header should be **EXACTLY THE SAME** as they appear in the script.   
 If there are spell errors，**ALL** names, even misspelled ones, should be declared.   
 It's better to avoid name ambiguities, for example, don't just refer to the first name when two characters both have it.   
 DMIAE, by default, uses the first defined name of character.(To avoid ambiguities)   
-*All, Everyone* and such is declared as fallback, you can also manually declare them again.   
+*All, Everyone* and such are declared as fallback, you can also manually declare them again.   
 ```
 @Hamilton:the main character	//OK
 @Hamilton,HAMILTON,HAMILTON XXX	//If you refer to Hamilton in multiple ways this is compulsory.
@@ -26,16 +26,17 @@ DMIAE, by default, uses the first defined name of character.(To avoid ambiguitie
 
 ### Properties
 Set properties of the script with the *#* prefix.   
+Properties contain information other than content of the script.   
 Properties are case-insensitive.   
 A property is a key-value pair, key and value is separated with a comma(,).   
 For example, the background of the generated slideshow can be set.   
 *[]* is used to limit the property in a domain.   
 ```
-#sublineFormat: 0, 1	//OK
+#name: LB	//OK
 ```   	
 
 ### Property Domains
-Each property has its own domain, so it is only effective under certain conditions.   
+Some properties have their own domain, so it is only effective under certain conditions.   
 Property domains are in the form *`#[key = value, key = value, ...] property`*.   
 A property will be applied when all of the assertions are satisfied.   
 By default, all properties have the domain *`[true = true]`*.   
@@ -86,7 +87,7 @@ By default they inherit their attached line's character.
 However you can also explicitly indicate a character(TODO).   
 Use *<:* or *:* to attach to previous main line. Use *>:* to attach to next main line.   
 If sublines follow a certain format: for example in translation.   
-Then you can set the property *#sublineFormat=0,1*, which means for each main line there are 0 sublines attached previously and 1 attached afterwards.   
+Then you can set the flag *#sublineFormat=0,1*, which means for each main line there are 0 sublines attached previously and 1 attached afterwards.   
 ```
 >:全体目光向我看齐，我宣布个事！	//OK
 Carlos: Peoples, I have a big announcement!
@@ -145,7 +146,7 @@ Will they know what you overcame?
 
 ### Runtime Flags
 The Parser accepts runtime flags with prefix *#*.   
-(TODO)
+Flags describe how the DMIAE parser should work when encountering these.   
 ```
 #sublineFormat=0,1
 Callahan: Ms... Elle...
@@ -201,7 +202,7 @@ Call `dmiae parse` to read a file and store as a DMIAE raw file.
 $ dmiae parse <path to file> [-o/--output path to store result] [-v/--verbose]
 ```
 
-# See
+# See also
 I plan to also implement this in Rust, but I haven't started yet.   
 
 # Work In Progress

@@ -3,7 +3,6 @@ plugins {
 }
 
 dependencies {
-  implementation 'org.apache.commons:commons-text'
   implementation project(':lib')
   implementation libs.picocli
   annotationProcessor libs.picocli.codegen
@@ -24,5 +23,5 @@ compileJava {
 
 jar {
   archiveBaseName = 'dmiae'
-  archiveVersion = '0.1.0'
+  archiveVersion = '0.2.0'
 }

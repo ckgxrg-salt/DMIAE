@@ -9,7 +9,7 @@ import picocli.CommandLine.Command;
 @Command(
     name = "dmiae",
     mixinStandardHelpOptions = true,
-    version = "alpha 0.1.0",
+    version = "alpha 0.2.0",
     description =
         "DraMa.InterActivE, a tool that helps format drama scripts and export them in different"
             + " formats.",
