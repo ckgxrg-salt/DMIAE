@@ -5,7 +5,8 @@ public enum AnnotationType {
   CHARACTER,
   NOTE,
   LIGHTING,
-  AUDIO;
+  AUDIO,
+  COMMAND;
 
   @Override
   public String toString() {
@@ -18,6 +19,8 @@ public enum AnnotationType {
         return "Lighting";
       case AUDIO:
         return "Audio";
+      case COMMAND:
+        return "Command";
       default:
         return "Note";
     }

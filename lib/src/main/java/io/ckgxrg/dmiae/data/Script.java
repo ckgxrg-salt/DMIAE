@@ -12,7 +12,6 @@ public class Script implements Serializable {
   public String name;
   public String author;
   public String credits;
-  public ScriptProps props = new ScriptProps();
 
   public HashSet<Character> characters = new HashSet<Character>();
   public ArrayList<Line> lines = new ArrayList<Line>();

@@ -99,9 +99,11 @@ public class Parser implements Callable<Optional<Script>> {
       // Read the header section
       while ((line = br.readLine()) != null) {
         line = line.strip();
+        // Skip blank lines
         if (line.isBlank()) {
           continue;
         }
+        // This indicated the end of the config section
         if (line.equals("#END")) {
           config = false;
           continue;
@@ -142,9 +144,6 @@ public class Parser implements Callable<Optional<Script>> {
       }
     }
   }
-
-  /** Apply sublineformat. */
-  void applySublineFormat() {}
 
   /** Read actual lines, sublines and annotations. */
   void readLine() {

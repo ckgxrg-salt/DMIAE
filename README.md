@@ -1,11 +1,19 @@
 # DraMa.InterActivE - DMIAE  
 
-A simple tool to unify scripts for school drama club.   
-It defines a syntax for a script, and some utilities to work with this format.   
+A simple tool to unify format for drama scripts.   
+It defines a syntax, and some utilities to work with this format.   
 
 # Syntax
-## Header
-The header section defines some important details about the script itself.   
+## Config Section
+The config section defines some important details about the script itself.   
+
+### Basic Info
+Set basic information of the script with the *#* prefix.   
+These information does not affect how DMIAE works and will be stored alongside the actual content.   
+Key and value are separated with a colon(:).   
+```
+#name: LB	//OK
+```   	
 
 ### Characters
 Declare all characters with the *@* prefix，one per line.   
@@ -14,8 +22,9 @@ For characters with multiple aliases, use commas(,) to separate each alias.
 Any characters that appears in the script must be declared, otherwise they'll be identified as part of other characters' line.   
 Character names that declared in the header should be **EXACTLY THE SAME** as they appear in the script.   
 If there are spell errors，**ALL** names, even misspelled ones, should be declared.   
-It's better to avoid name ambiguities, for example, don't just refer to the first name when two characters both have it.   
+It's better to avoid name ambiguities, for example, don't just refer to the first name when two characters have the same one.   
 DMIAE, by default, uses the first defined name of character.(To avoid ambiguities)   
+Please do not repetitively define character names.   
 *All, Everyone* and such are declared as fallback, you can also manually declare them again.   
 ```
 @Hamilton:the main character	//OK
@@ -24,36 +33,12 @@ DMIAE, by default, uses the first defined name of character.(To avoid ambiguitie
 @Chief Justice a maniac	//Invalid，The name will be identified as "Chief Justice a maniac"
 ```   
 
-### Properties
-Set properties of the script with the *#* prefix.   
-Properties contain information other than content of the script.   
-Properties are case-insensitive.   
-A property is a key-value pair, key and value is separated with a comma(,).   
-For example, the background of the generated slideshow can be set.   
-*[]* is used to limit the property in a domain.   
-```
-#name: LB	//OK
-```   	
-
-### Property Domains
-Some properties have their own domain, so it is only effective under certain conditions.   
-Property domains are in the form *`#[key = value, key = value, ...] property`*.   
-A property will be applied when all of the assertions are satisfied.   
-By default, all properties have the domain *`[true = true]`*.   
-For example:   
-```
-#[lineType = subline, index = 1] halt: true
-```   
-will halt DMIAE when it reads 2 consecutive sublines.   
-The keys are flags that reflect DMIAE's working status.   
-TODO: Give full list of keys   
-
 Finally, use #END to end headers and begin the content.   
 
 ## Content
-There should be a clear separation between character names and their lines, colons, commas, spaces and such are acceptable.   
+There should be a clear separation between character name and their line: colons, commas, spaces and such are acceptable.   
 Letters, in any form, is not accepted.   
-If DMIAE doesn't identify a explicitly written character name, it treats this as the continuation of lines of previous character.   
+If DMIAE doesn't identify a explicitly defined character name, it treats this as the continuation of lines of previous character.   
 So don't forget to explicitly change the character.   
 ```
 Elle: I feel so much better,
@@ -68,8 +53,7 @@ Emmett: Don't spend hours on my hair
 ```   
 
 ### Multiple Characters
-If a line is for multiple characters, use slash(/) to separate them.   
-Never write the same for the same character multiple times.   
+If a line is for multiple characters, use slashes(/) to separate them.   
 You could write different alias of the same character.(Man, who'll do that)   
 ```
 HAMILTON/MULLIGAN/LAURENS/LAFAYETTE
@@ -84,10 +68,9 @@ HAMILTON/MULLIGAN/LAURENS LAFAYETTE
 You can attach lines to other lines（Translations are done by this feature)   
 The attached lines are called Sublines.   
 By default they inherit their attached line's character.   
-However you can also explicitly indicate a character(TODO).   
-Use *<:* or *:* to attach to previous main line. Use *>:* to attach to next main line.   
-If sublines follow a certain format: for example in translation.   
-Then you can set the flag *#sublineFormat=0,1*, which means for each main line there are 0 sublines attached previously and 1 attached afterwards.   
+TODO: However you can also explicitly indicate a character.   
+Use *<:* or *:* to attach to previous primary line. Use *>:* to attach to next main line.   
+If sublines follow a certain format, for example in translation, you can set the flag *#sublineFormat:0,1*, which means for each main line there are 0 sublines attached previously and 1 attached afterwards.   
 ```
 >:全体目光向我看齐，我宣布个事！	//OK
 Carlos: Peoples, I have a big announcement!
@@ -97,8 +80,8 @@ Hamilton: Alexander Hamilton.
 My name is Alexander Hamilton.
 :我的名字是Alexander Hamilton。	//OK
 
-#sublineFormat=0,1
 #END
+#sublineFormat:0,1
 All: Gay or European?
 基佬还是欧洲人？
 It's hard to guarantee.
@@ -108,7 +91,7 @@ It's hard to guarantee.
 ### Annotations
 You can add Annotations to the lines，like lighting，music scripting，or just notes.   
 Use *<@* to add annotation for the previous line. Use *@* or *>@* to add for the next line.   
-Annotations are in the format *<@ : Type of Annotation : Content>*   
+Annotations are in the format *<@Type of Annotation : Content>*   
 If Type is left blank it will be seen as a note.   
 
 Types of Annotation:   
@@ -116,24 +99,25 @@ Types of Annotation:
 2. Nose：NOTE NT N
 3. Audio：AUDIO MUSIC SOUND A
 4. Character: CHARACTER CHARA CH C
+5. Command: CMD
 ```
-@:L:红1面2
+@L:红1面2
 All: Blood in the water.
 :水中之血。
-@:NT:开始逼近
+@NT:开始逼近
 Callahan: Becomes your only law.
 :成为你唯一的法则。
 <@:Callahan关门
-<@:AUDIO:Blood in the water结束
+<@AUDIO:Blood in the water结束
 ```   
 
-### Forced Main Line
-Two consecutive colons(::) forcedly mark the line as a main line, bypassing detection of sublines and annotations.    
+### Force Primary Line
+Two consecutive colons(::) forcefully mark the line as a main line, bypassing detection of sublines and annotations.    
 If there are a few lines that does not follow format set in sublineFormat, you can utilise this.   
 sublineFormat will not count the forcedly marked main line.   
 So it's recommended to forcedly mark the next line after a single line as main line.   
 ```
-#sublineFormat=0,1
+#sublineFormat:0,1
 
 you never learned to take your time!
 你急不可待
@@ -148,15 +132,27 @@ Will they know what you overcame?
 The Parser accepts runtime flags with prefix *#*.   
 Flags describe how the DMIAE parser should work when encountering these.   
 ```
-#sublineFormat=0,1
+#sublineFormat:0,1
 Callahan: Ms... Elle...
 嗯……Elle……
-#sublineFormat=0,0
+#sublineFormat:0,0
 Elle: Woods! Elle Woods.
-#sublineFormat=0,1
+#sublineFormat:0,1
 Callahan: Well, someone had had their morning coffee.
 嗯，有人一大早就精力充沛啊。 
 ```   
+
+### Flag Domains
+Some properties have their own domain, so they are only effective under certain conditions.   
+Property domains are in the form *`#[key = value, key = value, ...] property`*.   
+A property will be applied when all of the assertions are satisfied.   
+For example:   
+```
+#[lineType = subline, index = 1] halt: true
+```   
+will halt DMIAE when it reads 2 consecutive sublines.   
+The keys are flags that reflect DMIAE's working status.   
+TODO: Give full list of keys   
 
 # Example
 An example of script that follows DMIAE syntax:   
@@ -171,7 +167,7 @@ An example of script that follows DMIAE syntax:
 #sublineFormat:0,1
 #END
 	
-@:L:粉2面1
+@L:粉2面1
 Elle    Oh Warner, tonight is just perfect.
 哦，Warner,今夜真是太完美了。
 Warner Huntington IV: No, it's you're perfect.
@@ -180,7 +176,7 @@ Elle.........No, it's you.
 不，是你。
 Elle You, you, you, okay, I'm irritating myself.
 你，你，你，好吧，我自己都烦了。
-@:A:Serious进
+@A:Serious进
 Warner+I have some dreams to make true
 	
 	
@@ -189,9 +185,9 @@ That's why you and me,
 这就是为什么你我……
 Should break up!
 应该分手！
-<@:A:Serious结束
+<@A:Serious结束
 <@:干脆一点
-@:L:蓝2面1
+@L:蓝2面1
 Elle: Okay baby I'll give my han...What?
 好呀，这是我的手……什么！
 ```   
